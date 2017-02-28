@@ -4,10 +4,26 @@ import csv
 class PokerHand(object):
     def __init__(self):
         self.players = []
+        self.events = []
+
+    def calculate_hand(self):
+        pass
+
 
 class Player(object):
+    """Note that this only represents a player during one hand."""
     def __init__(self, index):
         self.index = index
+        self.hand_winner = False
+        self.ending_stack = 0
+
+class Event(object):
+    def __init__(self, starting_time):
+        self.starting_time = starting_time
+        self.action = ""
+        self.player = ""
+        self.card = ""
+        self.amount = 0
 
 def parse_hand(fields):
     if not fields or fields[0].startswith("//"):
@@ -18,7 +34,7 @@ def parse_hand(fields):
     title_fields = hand.title.split(' ')
     if title_fields[0] == 'Hand':
         hand.number = title_fields[1]
-    
+
     hand.ante = fields[2]
     hand.small_blind = fields[3]
     hand.big_blind = fields[4]
@@ -34,9 +50,32 @@ def parse_hand(fields):
         player.straddle = fields[start_index + 1]
         player.cards = fields[start_index + 2]
         player.stack = fields[start_index + 3]
-        
-        hand.players.append(player)
-        assert len(hand.players) == player_index
+
+        if not player.name.startswith("SEAT"):
+            hand.players.append(player)
+            assert len(hand.players) == player_index
+    events_starting_index = players_starting_index + 4 * number_of_players
+    for event_start in range(events_starting_index, len(fields), 5):
+        starting_time = fields[event_start]
+        if not starting_time:
+            continue
+        event = Event(starting_time)
+        event.action = fields[event_start + 1]
+        assert event.action in ['BOARD', 'BET', 'CALL', 'FOLD']
+        # The very last event is generally cut off at the point it has no more
+        # information, and the last event is often a fold hence we just assume
+        # if there is an index error then the rest of the fields are empty.
+        try:
+            event.player = fields[event_start + 2]
+            event.card = fields[event_start + 3]
+            amount_string = fields[event_start + 4]
+            event.amount = 0 if not amount_string else int(amount_string)
+        except IndexError:
+            pass
+        hand.events.append(event)
+
+    hand.calculate_hand()
+    print("completed hand")
     return hand
 
 def read_poker_datafile(filename):

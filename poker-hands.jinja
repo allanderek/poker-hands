@@ -19,9 +19,11 @@
     {% for player in hand.players %}
     <div class="column player-box">
         <span>Name: {{ player.name }} </span>
+        <span>Winner: {{ player.hand_winner }}</span>
         <span>Straddle: {{ player.straddle }}</span>
         <span>Cards: {{ player.cards }}</span>
         <span>Starting stack: {{ player.stack }}</span>
+        <span>Ending stack: {{ player.ending_stack}}</span>
     </div>
     {% endfor %}
 </div>
