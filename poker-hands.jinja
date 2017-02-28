@@ -14,7 +14,16 @@
 <div class="columns">
     <div class="column">
         Start time: {{hand.starting_time}}
+        Number: {{hand.number}}
     </div>
+    {% for player in hand.players %}
+    <div class="column player-box">
+        <span>Name: {{ player.name }} </span>
+        <span>Straddle: {{ player.straddle }}</span>
+        <span>Cards: {{ player.cards }}</span>
+        <span>Starting stack: {{ player.stack }}</span>
+    </div>
+    {% endfor %}
 </div>
 
 {% endfor %}
