@@ -6,6 +6,12 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <title>Poker Night in America</title>
 
+<style>
+.board-cards{
+    border: solid 1px black;
+}
+</style>
+
 </head>
 <body>
 
@@ -16,14 +22,21 @@
         Start time: {{hand.starting_time}}
         Number: {{hand.number}}
     </div>
+    <div class="column board-cards">
+        {% for card in hand.flop %}
+            {{ card }}
+        {% endfor %}
+    </div>
     {% for player in hand.players %}
     <div class="column player-box">
-        <span>Name: {{ player.name }} </span>
-        <span>Winner: {{ player.hand_winner }}</span>
-        <span>Straddle: {{ player.straddle }}</span>
-        <span>Cards: {{ player.cards }}</span>
-        <span>Starting stack: {{ player.stack }}</span>
-        <span>Ending stack: {{ player.ending_stack}}</span>
+        <ul>
+            <li><strong>Name:</strong> {{ player.name }} </li>
+            <li><strong>Winner:</strong> {{ player.hand_winner }}</li>
+            <li><strong>Straddle:</strong> {{ player.straddle }}</li>
+            <li><strong>Cards:</strong> {{ player.cards }}</li>
+            <li><strong>Starting stack:</strong> {{ player.starting_stack }}</li>
+            <li><strong>Ending stack:</strong> {{ player.ending_stack}}</li>
+        </ul>
     </div>
     {% endfor %}
 </div>

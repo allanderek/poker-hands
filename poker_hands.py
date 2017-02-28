@@ -6,8 +6,25 @@ class PokerHand(object):
         self.players = []
         self.events = []
 
+        self.flop = []
+
     def calculate_hand(self):
-        pass
+        pot = 0
+        for event in self.events:
+            if event.action == 'BOARD':
+                self.flop.append(event.card)
+            player = self.players[event.player - 1] if event.player else None
+            if event.amount:
+                pot += event.amount
+                player.ending_stack -= event.amount
+            if event.action == 'FOLD':
+                player.folded = True
+        remaining_players = [p for p in self.players if not p.folded]
+        winners = [remaining_players[0]]
+        winning_amount = pot / len(winners)
+        for winner in winners:
+            winner.hand_winner = True
+            winner.ending_stack += winning_amount
 
 
 class Player(object):
@@ -15,7 +32,12 @@ class Player(object):
     def __init__(self, index):
         self.index = index
         self.hand_winner = False
-        self.ending_stack = 0
+        self.folded = False
+
+    def init_stack(self, stack):
+        self.starting_stack = stack
+        # The ending stack will be updated in the Hand.calculate_hand method.
+        self.ending_stack = stack
 
 class Event(object):
     def __init__(self, starting_time):
@@ -24,6 +46,11 @@ class Event(object):
         self.player = ""
         self.card = ""
         self.amount = 0
+
+def parse_int(s):
+    if not s:
+        return None
+    return int(s)
 
 def parse_hand(fields):
     if not fields or fields[0].startswith("//"):
@@ -49,7 +76,7 @@ def parse_hand(fields):
         player.name = fields[start_index]
         player.straddle = fields[start_index + 1]
         player.cards = fields[start_index + 2]
-        player.stack = fields[start_index + 3]
+        player.init_stack(int(fields[start_index + 3]))
 
         if not player.name.startswith("SEAT"):
             hand.players.append(player)
@@ -66,16 +93,14 @@ def parse_hand(fields):
         # information, and the last event is often a fold hence we just assume
         # if there is an index error then the rest of the fields are empty.
         try:
-            event.player = fields[event_start + 2]
+            event.player = parse_int(fields[event_start + 2])
             event.card = fields[event_start + 3]
-            amount_string = fields[event_start + 4]
-            event.amount = 0 if not amount_string else int(amount_string)
+            event.amount = parse_int(fields[event_start + 4])
         except IndexError:
             pass
         hand.events.append(event)
 
     hand.calculate_hand()
-    print("completed hand")
     return hand
 
 def read_poker_datafile(filename):
