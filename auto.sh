@@ -1,3 +1,5 @@
+COMMAND="python poker_hands.py"
+${COMMAND}
 watchmedo shell-command --patterns="*.py;*.jinja" \
-    --command='python poker_hands.py' \
+    --command="${COMMAND}" \
     .
