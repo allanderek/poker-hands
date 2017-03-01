@@ -10,6 +10,19 @@
 .board-cards{
     border: solid 1px black;
 }
+
+.diams {
+    color: #00f;
+}
+.hearts {
+    color: #f00;
+}
+.spades {
+    color: #000;
+}
+.clubs {
+    color: #090;
+}
 </style>
 
 </head>
@@ -22,18 +35,20 @@
         Start time: {{hand.starting_time}}
         Number: {{hand.number}}
     </div>
-    <div class="column board-cards">
+    <div class="column board-cards playingCards">
         {% for card in hand.flop %}
-            {{ card }}
+            {{ card | display_card }}
         {% endfor %}
     </div>
+</div>
+<div class="columns">
     {% for player in hand.players %}
     <div class="column player-box">
         <ul>
             <li><strong>Name:</strong> {{ player.name }} </li>
             <li><strong>Winner:</strong> {{ player.hand_winner }}</li>
             <li><strong>Straddle:</strong> {{ player.straddle }}</li>
-            <li><strong>Cards:</strong> {{ player.cards }}</li>
+            <li><strong>Cards:</strong> {{ player.cards|display_pocket }}</li>
             <li><strong>Starting stack:</strong> {{ player.starting_stack }}</li>
             <li><strong>Ending stack:</strong> {{ player.ending_stack}}</li>
         </ul>

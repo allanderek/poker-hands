@@ -25,6 +25,22 @@ def parse_card(card):
              'k': 13}.get(value)
     return value, suit
 
+def display_card(card):
+    suit_char = card[-1]
+    rank = card[:-1]
+    suit = {'h': 'hearts', 'c': 'clubs',
+            's': 'spades', 'd': 'diams'}.get(suit_char)
+    return """
+    <span class="card rank-{0} {2}">
+            <span class="rank">{1}</span>
+            <span class="suit">&{2};</span>
+    </span>""".format(rank, rank.upper(), suit)
+
+def display_pocket(cards):
+    if not cards.strip():
+        return ""
+    return " ".join(display_card(c) for c in cards.split(' '))
+
 def parse_pocket(pocket):
     return [parse_card(c) for c in pocket.split(' ')]
 
@@ -362,6 +378,8 @@ def compile_poker_hands_html():
         loader=jinja2.PackageLoader('poker_hands', '.'),
         autoescape=jinja2.select_autoescape(['html', 'xml'])
     )
+    env.filters['display_card'] = display_card
+    env.filters['display_pocket'] = display_pocket
     template = env.get_template('poker-hands.jinja')
 
     poker_hands = read_poker_datafile('example.csv')
