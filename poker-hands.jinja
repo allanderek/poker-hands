@@ -11,6 +11,10 @@
     border: solid 1px black;
 }
 
+.player-box{
+    border: solid 1px black;
+}
+
 .diams {
     color: #00f;
 }
@@ -28,21 +32,35 @@
 </head>
 <body>
 
+{% macro display_definitions(definitions) %}
+    <ul>
+        {% for def, value in definitions %}
+            <li><strong>{{def}}: </strong>{{value}}</li>
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
 {% for hand in poker_hands %}
 
 <div class="columns">
     <div class="column">
-        Start time: {{hand.starting_time}}
-        Number: {{hand.number}}
+        {{ display_definitions([('Start time', hand.starting_time),
+                                ('End time', hand.ending_time),
+                                ('Number', hand.number)]) }}
     </div>
     <div class="column board-cards playingCards">
         {% for card in hand.flop %}
             {{ card | display_card }}
         {% endfor %}
     </div>
+    <div class="column">
+        {{ display_definitions([('Small Blind', hand.small_blind),
+                                ('Big Blind', hand.big_blind),
+                                ('Ante', hand.ante)]) }}
+    </div>
 </div>
-<div class="columns">
-    {% for player in hand.players %}
+
+{% macro display_player(player) %}
     <div class="column player-box">
         <ul>
             <li><strong>Name:</strong> {{ player.name }} </li>
@@ -53,6 +71,16 @@
             <li><strong>Ending stack:</strong> {{ player.ending_stack}}</li>
         </ul>
     </div>
+{% endmacro %}
+
+<div class="columns">
+    {% for player in hand.players[:5] %}
+        {{display_player(player)}}
+    {% endfor %}
+</div>
+<div class="columns">
+    {% for player in hand.players[5:] %}
+        {{display_player(player)}}
     {% endfor %}
 </div>
 <div class="columns events-list">

@@ -188,6 +188,10 @@ class PokerHand(object):
         assert player is None or player.index == player_index
         return player
 
+    @property
+    def ending_time(self):
+        return self.events[-1].starting_time
+
     def calculate_hand(self):
         pot = 0
 
