@@ -40,6 +40,30 @@
     </div>
     {% endfor %}
 </div>
+<div class="columns events-list">
+<table>
+    <thead>
+        <tr><th>Time</th><th>Action</th><th>Pot</th></tr>
+    </thead>
+    <tbody>
+        {% for event in hand.events if event.display %}
+            {% if event.display %}
+                <tr>
+                    <td>{{event.starting_time}}</td>
+                    <td>
+                        {% if event.bold %}
+                            <strong>{{event.description}}</strong>
+                        {% else %}
+                            {{event.description}}
+                        {% endif %}
+                    </td>
+                    <td>{{event.pot}}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+</div>
 
 {% endfor %}
 

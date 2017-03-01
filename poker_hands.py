@@ -186,14 +186,47 @@ class PokerHand(object):
             player.ending_stack -= player.straddle
 
         for event in self.events:
-            if event.action == 'BOARD':
-                self.flop.append(event.card)
             player = self.get_player(event.player)
-            if event.amount:
+            player_description = "{} ({})".format(player.name, player.index) if player else None
+            if event.action == 'BOARD':
+                event.bold = True
+                self.flop.append(event.card)
+                num_table_cards = len(self.flop)
+                if num_table_cards < 3:
+                    event.display = False
+                elif num_table_cards == 3:
+                    event.description = 'Flop'
+                elif num_table_cards == 4:
+                    event.description = "Turn"
+                else:
+                    assert num_table_cards == 5
+                    event.description = "River"
+            elif event.action == 'BET' and not event.amount:
+                event.description = '{} Check'.format(player_description)
+            elif event.action == 'BET':
                 pot += event.amount
                 player.ending_stack -= event.amount
-            if event.action == 'FOLD':
+                event.description = '{} Raise {}'.format(player_description, event.amount)
+                event.bold = True
+            elif event.action == 'CALL':
+                price = max(p.invested_in_hand for p in self.players)
+                call_amount = price - player.invested_in_hand
+
+                # TODO: In the case that it is more, then you end up with a side-pot
+                # I think we can implement that relatively easily, by simply post-calculating
+                # the amount each winner gets at the end of the hand, though of course
+                # the winners would be calculated differently to now.
+                assert call_amount <= player.ending_stack
+                pot += call_amount
+                player.ending_stack -= call_amount
+                event.description = '{} Call {}'.format(player_description, call_amount)
+            else:
+                assert event.action == 'FOLD'
                 player.folded = True
+                event.description = '{} Fold'.format(player_description)
+            # Careful, this applies to all events, but must be done after we have
+            # potentially updated the pot.
+            event.pot = pot
 
         # The list of player indexes that have made *some* action in the hand.
         event_players = set(e.player for e in self.events)
@@ -246,6 +279,10 @@ class Player(object):
     def is_empty_seat(self):
         return self.name.startswith("SEAT")
 
+    @property
+    def invested_in_hand(self):
+        return self.starting_stack - self.ending_stack
+
 class Event(object):
     def __init__(self, starting_time):
         self.starting_time = starting_time
@@ -253,6 +290,8 @@ class Event(object):
         self.player = ""
         self.card = ""
         self.amount = 0
+        self.display = True
+        self.bold = False
 
 def parse_int(s):
     if not s:
