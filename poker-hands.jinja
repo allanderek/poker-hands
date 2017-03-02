@@ -66,7 +66,7 @@
             <li><strong>Name:</strong> {{ player.name }} </li>
             <li><strong>Winner:</strong> {{ player.hand_winner }}</li>
             <li><strong>Straddle:</strong> {{ player.straddle }}</li>
-            <li><strong>Cards:</strong> {{ player.cards|display_pocket }}</li>
+            <li><strong>Cards:</strong> {{ player.pocket|display_pocket }}</li>
             <li><strong>Starting stack:</strong> {{ player.starting_stack }}</li>
             <li><strong>Ending stack:</strong> {{ player.ending_stack}}</li>
         </ul>
@@ -86,7 +86,11 @@
 <div class="columns events-list">
 <table>
     <thead>
-        <tr><th>Time</th><th>Action</th><th>Pot</th></tr>
+        <tr><th>Time</th><th>Action</th><th>Pot</th>
+            {% for p in hand.taking_part %}
+                <th>{{p.index}}</th>
+            {% endfor %}
+            </tr>
     </thead>
     <tbody>
         {% for event in hand.events if event.display %}
@@ -101,6 +105,11 @@
                         {% endif %}
                     </td>
                     <td>{{event.pot}}</td>
+                    {% if event.win_probabilities %}
+                        {% for p in hand.taking_part %}
+                            <td>{{event.win_probabilities.get(p.index, "-")}}</td>
+                        {% endfor %}
+                    {% endif %}
                 </tr>
             {% endif %}
         {% endfor %}

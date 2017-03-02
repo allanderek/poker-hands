@@ -1,6 +1,7 @@
 import csv
 import enum
 from collections import defaultdict
+import itertools
 
 import jinja2
 
@@ -11,38 +12,36 @@ def parse_card(card):
     # want to sort it in that manner. However, for straights we have to be
     # careful to include a,2,3,4,5.
     value = {'a': 14,
-             '2': 2,
-             '3': 3,
-             '4': 4,
-             '5': 5,
-             '6': 6,
-             '7': 7,
-             '8': 8,
-             '9': 9,
-             '10': 10,
              'j': 11,
              'q': 12,
-             'k': 13}.get(value)
+             'k': 13}.get(value, None) or int(value)
     return value, suit
 
+def new_deck():
+    return [(value, suit) for value in range(2,15) for suit in ['c', 'h', 'd', 's']]
+
 def display_card(card):
-    suit_char = card[-1]
-    rank = card[:-1]
+    rank_value, suit_char = card
     suit = {'h': 'hearts', 'c': 'clubs',
             's': 'spades', 'd': 'diams'}.get(suit_char)
+    value = { 14: 'A',
+              13: 'K',
+              12: 'Q',
+              11: 'J'}.get(rank_value, str(rank_value))
+
     return """
-    <span class="card rank-{0} {2}">
-            <span class="rank">{1}</span>
-            <span class="suit">&{2};</span>
-    </span>""".format(rank, rank.upper(), suit)
+    <span class="card {1}">
+            <span class="rank">{0}</span>
+            <span class="suit">&{1};</span>
+    </span>""".format(value, suit)
 
 def display_pocket(cards):
-    if not cards.strip():
-        return ""
-    return " ".join(display_card(c) for c in cards.split(' '))
+    return " ".join(display_card(c) for c in cards)
 
 def parse_pocket(pocket):
-    return [parse_card(c) for c in pocket.split(' ')]
+    if not pocket.strip():
+        return []
+    return [parse_card(c) for c in pocket.strip().split(' ')]
 
 class HandClass(enum.IntEnum):
     high_card = 1
@@ -157,7 +156,7 @@ def best_hand(pocket, flop):
             return HandRank(HandClass.straight, value_counts)
 
         if 3 in card_counts:
-            return HandRank(HandClass.full_house, value_counts)
+            return HandRank(HandClass.three_of_a_kind, value_counts)
 
         if list(card_counts).count(2) == 2:
             return HandRank(HandClass.pair, value_counts)
@@ -168,6 +167,9 @@ def best_hand(pocket, flop):
         return HandRank(HandClass.high_card, value_counts)
 
     return max([hand_rank(h) for h in possible_hands])
+
+
+
 
 class PokerHand(object):
     def __init__(self):
@@ -185,6 +187,50 @@ class PokerHand(object):
     def ending_time(self):
         return self.events[-1].starting_time
 
+    def calculate_winners(self, players, board):
+        if len(players) == 1:
+            return players
+        for player in players:
+            player.best_hand_rank = best_hand(player.pocket, board)
+        winner = players[0]
+        winners = [winner]
+        for player in players[1:]:
+            if winner.best_hand_rank < player.best_hand_rank:
+                winner = player
+                winners = [player]
+            elif winner.best_hand_rank == player.best_hand_rank:
+                winners.append(player)
+        return winners
+
+    def calculate_probabilities(self, players):
+        if len(self.flop) < 3:
+            return None
+        if len(players) == 1:
+            return { players[0].index: "100%" }
+
+        deck = new_deck()
+        for card in self.flop:
+            deck.remove(card)
+        for player in players:
+            for card in player.pocket:
+                deck.remove(card)
+
+        possible_draws = itertools.combinations(deck, 5 - len(self.flop))
+        win_count = defaultdict(int)
+        number_draws = 0
+        for draw in possible_draws:
+            number_draws += 1
+            board = self.flop + list(draw)
+            for winner in self.calculate_winners(players, board):
+                win_count[winner] += 1
+
+        def get_percentage(n):
+            return "{0:.1f}%".format(100 * n / number_draws)
+        return { player.index: get_percentage(win_count[player]) for player in players}
+
+    def get_remaining_players(self):
+        return [p for p in self.taking_part if not p.folded]
+
     def calculate_hand(self):
         pot = 0
 
@@ -198,12 +244,24 @@ class PokerHand(object):
             pot += player.straddle
             player.ending_stack -= player.straddle
 
+        # The list of player indexes that have made *some* action in the hand.
+        event_players = set(e.player for e in self.events)
+        self.taking_part = [p for p in self.players if p.index in event_players]
+        for p in self.taking_part:
+            # Just a sanity check that no empty seats take part.
+            assert not p.is_empty_seat
+        # Also check that any player not taking part did not receive cards
+        for p in self.players:
+            if p not in self.taking_part:
+                assert not p.cards
+
+        most_recent_win_probabilities = None
         for event in self.events:
             player = self.get_player(event.player)
             player_description = "{} ({})".format(player.name, player.index) if player else None
             if event.action == 'BOARD':
                 event.bold = True
-                self.flop.append(event.card)
+                self.flop.append(parse_card(event.card))
                 num_table_cards = len(self.flop)
                 if num_table_cards < 3:
                     event.display = False
@@ -240,36 +298,27 @@ class PokerHand(object):
             # Careful, this applies to all events, but must be done after we have
             # potentially updated the pot.
             event.pot = pot
+            # This does mean we will be needlessly re-calculating when the
+            # probabilities have not changed, for example when someone bets or calls
+            # the probabilities have not changed. Actually I think those are the
+            # only two possibilities so this should be pretty easy to solve.
+            if event.action in ['BET', 'CALL']:
+                event.win_probabilities = most_recent_win_probabilities
+            else:
+                remaining_players = self.get_remaining_players()
+                event.win_probabilities = self.calculate_probabilities(remaining_players)
+                most_recent_win_probabilities = event.win_probabilities
+        # End of event stream.
 
-        # The list of player indexes that have made *some* action in the hand.
-        event_players = set(e.player for e in self.events)
-        taking_part = [p for p in self.players if p.index in event_players]
-        for p in taking_part:
-            # Just a sanity check that no empty seats take part.
-            assert not p.is_empty_seat
-        # Also check that any player not taking part did not receive cards
-        for p in self.players:
-            if p not in taking_part:
-                assert not p.cards
-        remaining_players = [p for p in taking_part if not p.folded]
-
+        # It should not really be possible that this has not already been called
+        # since we should have had at least one FOLD or BOARD event.
+        # remaining_players = self.get_remaining_players()
         if len(remaining_players) == 1:
             winner = remaining_players[0]
             winners = [winner]
         else:
             assert len(remaining_players) > 1
-            flop = [parse_card(c) for c in self.flop]
-            for player in remaining_players:
-                pocket = parse_pocket(player.cards)
-                player.best_hand_rank = best_hand(pocket, flop)
-            winner = remaining_players[0]
-            winners = [winner]
-            for player in remaining_players[1:]:
-                if winner.best_hand_rank < player.best_hand_rank:
-                    winner = player
-                    winners = [player]
-                elif winner.best_hand_rank == player.best_hand_rank:
-                    winners.append(player)
+            winners = self.calculate_winners(remaining_players, self.flop)
 
         winning_amount = pot / len(winners)
         for winner in winners:
@@ -305,6 +354,7 @@ class Event(object):
         self.amount = 0
         self.display = True
         self.bold = False
+        self.win_probabilities = None
 
 def parse_int(s):
     if not s:
@@ -335,6 +385,7 @@ def parse_hand(fields):
         player.name = fields[start_index]
         player.straddle = parse_int(fields[start_index + 1])
         player.cards = fields[start_index + 2]
+        player.pocket = parse_pocket(player.cards)
         player.init_stack(int(fields[start_index + 3]))
 
         if not player.name.startswith("SEAT"):
