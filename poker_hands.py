@@ -87,13 +87,6 @@ class HandRank(object):
     def __lt__(self, other):
         return (self.rank, self.card_values) < (other.rank, other.card_values)
 
-    # def __ge__(self, other):
-    #     return (self.rank, self.card_values) >= (other.rank, other.card_values)
-
-    # def __gt__(self, other):
-    #     return (self.rank, self.card_values) > (other.rank, other.card_values)
-
-
 
 def best_hand(pocket, flop):
     assert len(pocket) == 2
