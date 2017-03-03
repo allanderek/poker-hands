@@ -43,42 +43,70 @@
 {% for hand in poker_hands %}
 
 <div class="columns">
-    <div class="column">
-        {{ display_definitions([('Start time', hand.starting_time),
-                                ('End time', hand.ending_time),
-                                ('Number', hand.number)]) }}
+    <div class="info_hand">
+        <div class="hand"><div class="label_hand">Hand Number</div><div class="value_hand">{{hand.number}}</div></div>
+        <div class="date"><div class="label_date">Date</div><div class="value_date">Value</div></div>
+        <div class="name"><div class="label_name">Name of Sheet Imported</div><div class="value_name">Value</div></div>
+        <div class="start"><div class="label_start">Hand Start Time</div><div class="value_start">{{hand.starting_time}}</div></div>
+        <div class="end"><div class="label_end">Hand End Time</div><div class="value_end">{{hand.ending_time}}</div></div>
+        <div class="duration"><div class="label_duration">Duration of Hand</div><div class="value_duration">Value</div></div>
     </div>
-    <div class="column board-cards playingCards">
-        {% for card in hand.flop %}
-            {{ card | display_card }}
-        {% endfor %}
+
+
+    <div class="cards_community">
+        {% if hand.has_flop %}
+            <div class="cards_flop">
+                <div class="commcard">{{ hand.flop[0] | display_card }}</div>
+                <div class="commcard">{{ hand.flop[1] | display_card }}</div>
+                <div class="commcard">{{ hand.flop[2] | display_card }}</div>
+                <div class="label_flop">Flop</div>
+            </div>
+            {% if hand.has_turn %}
+                <div class="cards_turn">
+                    <div class="commcard">{{ hand.flop[3] | display_card }}</div>
+                    <div class="label_turn">Turn</div>
+                </div>
+                {% if hand.has_river %}
+                    <div clas="cards_river">
+                        <div class="commcard">{{ hand.flop[4] | display_card }}</div>
+                        <div class="label_river">River</div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endif %}
     </div>
-    <div class="column">
-        {{ display_definitions([('Small Blind', hand.small_blind),
-                                ('Big Blind', hand.big_blind),
-                                ('Ante', hand.ante)]) }}
+
+    <div class="info_blinds">
+        <div class="bb"><div class="label_bb">Big Blind Amount</div><div class="value_bb">{{hand.big_blind}}</div></div>
+        <div class="sb"><div class="label_sb">Small Blind Amount</div><div class="value_sb">{{hand.small_blind}}</div></div>
+        <div class="ante"><div class="label_ante">Ante Amount</div><div class="value_ante">{{hand.ante}}</div></div>
     </div>
+
 </div>
 
 {% macro display_player(player) %}
-    <div class="column player-box">
-        <ul>
-            <li><strong>Name:</strong> {{ player.name }} </li>
-            <li><strong>Winner:</strong> {{ player.hand_winner }}</li>
-            <li><strong>Straddle:</strong> {{ player.straddle }}</li>
-            <li><strong>Cards:</strong> {{ player.pocket|display_pocket }}</li>
-            <li><strong>Starting stack:</strong> {{ player.starting_stack }}</li>
-            <li><strong>Ending stack:</strong> {{ player.ending_stack}}</li>
-        </ul>
+
+    <div class="p{{player.index}}">
+        <div class="player">{{player.index}}</div>
+        <div class="name">{{player.name}}</div>
+        <div class="chips_start">{{player.starting_stack}}</div>
+        <div class="chips_end">{{player.ending_stack}}</div>
+        <div class="card ah">{{player.pocket[0]|display_card}}</div>
+        <div class="card ah">{{player.pocket[1]|display_card}}</div>
+        <div class="player_dealer">{{hand.dealer == player.index}}</div>
+        <div class="player_not_sb">{{hand.small_blind_player == player.index}}</div>
+        <div class="player_not_bb">{{hand.big_blind_player == player.index}}</div>
+        <div class="straddle">{{player.straddle}}</div>
+        <div class="player_winner">{{player.hand_winner}}</div>
     </div>
 {% endmacro %}
 
-<div class="columns">
+<div class="columns info_players">
     {% for player in hand.players[:5] %}
         {{display_player(player)}}
     {% endfor %}
 </div>
-<div class="columns">
+<div class="columns info_players">
     {% for player in hand.players[5:] %}
         {{display_player(player)}}
     {% endfor %}

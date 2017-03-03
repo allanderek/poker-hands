@@ -187,6 +187,18 @@ class PokerHand(object):
     def ending_time(self):
         return self.events[-1].starting_time
 
+    @property
+    def has_flop(self):
+        return len(self.flop) >= 3
+
+    @property
+    def has_turn(self):
+        return len(self.flop) >= 4
+
+    @property
+    def has_river(self):
+        return len(self.flop) == 5
+
     def calculate_winners(self, players, board):
         if len(players) == 1:
             return players
@@ -374,7 +386,7 @@ def parse_hand(fields):
     hand.ante = fields[2]
     hand.small_blind = parse_int(fields[3])
     hand.big_blind = parse_int(fields[4])
-    hand.dealer = fields[5]
+    hand.dealer = parse_int(fields[5])
     hand.small_blind_player = parse_int(fields[6])
     hand.big_blind_player = parse_int(fields[7])
     players_starting_index = 8
@@ -420,6 +432,7 @@ def read_poker_datafile(filename):
             poker_hand = parse_hand(row)
             if poker_hand:
                 yield poker_hand
+                break
 
 def compile_poker_hands_html():
     env = jinja2.Environment(
