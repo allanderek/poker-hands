@@ -20,24 +20,6 @@ def parse_card(card):
 def new_deck():
     return [(value, suit) for value in range(2,15) for suit in ['c', 'h', 'd', 's']]
 
-def display_card(card):
-    rank_value, suit_char = card
-    suit = {'h': 'hearts', 'c': 'clubs',
-            's': 'spades', 'd': 'diams'}.get(suit_char)
-    value = { 14: 'A',
-              13: 'K',
-              12: 'Q',
-              11: 'J'}.get(rank_value, str(rank_value))
-
-    return """
-    <div class="playing-card {1}">
-            <div class="rank">{0}</div>
-            <div class="suit">&{1};</div>
-    </div>""".format(value, suit)
-
-def display_pocket(cards):
-    return " ".join(display_card(c) for c in cards)
-
 def parse_pocket(pocket):
     if not pocket.strip():
         return []
@@ -237,7 +219,7 @@ class PokerHand(object):
         return winners
 
     def calculate_probabilities(self, players):
-        return {player.index: player.index for player in players}
+        # return {player.index: player.index for player in players}
         if len(self.flop) < 3:
             return None
         if len(players) == 1:
@@ -377,8 +359,13 @@ class Player(object):
         return self.name.startswith("SEAT")
 
     @property
+    def has_pocket(self):
+        return len(self.pocket)
+
+    @property
     def invested_in_hand(self):
         return self.starting_stack - self.ending_stack
+
 
 class Event(object):
     def __init__(self, starting_time):
@@ -455,15 +442,12 @@ def read_poker_datafile(filename):
             poker_hand = parse_hand(row)
             if poker_hand:
                 yield poker_hand
-                break
 
 def compile_poker_hands_html():
     env = jinja2.Environment(
         loader=jinja2.PackageLoader('poker_hands', '.'),
         autoescape=jinja2.select_autoescape(['html', 'xml'])
     )
-    env.filters['display_card'] = display_card
-    env.filters['display_pocket'] = display_pocket
     template = env.get_template('poker-hands.jinja')
 
     poker_hands = read_poker_datafile('example.csv')
