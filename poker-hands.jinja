@@ -2,17 +2,77 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.3.1/css/bulma.min.css" integrity="sha256-6ZFIKt0ohcBorQWIruhlYBoADBIFrJuXtEJsjFxb2Wk=" crossorigin="anonymous" />
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.3.1/css/bulma.min.css" integrity="sha256-6ZFIKt0ohcBorQWIruhlYBoADBIFrJuXtEJsjFxb2Wk=" crossorigin="anonymous" /> -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <title>Poker Night in America</title>
 
 <style>
-.board-cards{
-    border: solid 1px black;
+.container, .cards, .community-cards{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-end;
 }
 
-.player-box{
-    border: solid 1px black;
+.flop, .turn, .river{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 10px 10px 10px 10px;
+}
+
+.flop .cards .label, .turn .label, .river .label{
+    text-align: center;
+}
+
+.playing-card{
+    border: 1px solid black;
+    width: 20px;
+    margin: 2px;
+}
+
+.info{
+    border: 1px solid black;
+}
+
+.player-name-line{
+    /*display: flex;
+    flex-direction: row;
+    justify-content: space-between;*/
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.player-name-line .player{
+    padding-right: 1em;
+}
+
+.player-badges{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.def-line{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.def-line .label{
+    margin-right: 8px;
+}
+
+.label{
+    font-weight: bold;
+}
+
+.encircled{
+    border-radius: 50%;
+    border: 2px solid #666;
+    text-align: center;
+    padding: 0.4em;
 }
 
 .diams {
@@ -27,6 +87,11 @@
 .clubs {
     color: #090;
 }
+
+tbody tr:nth-child(odd) {
+  background: #eee;
+}
+
 </style>
 
 </head>
@@ -42,76 +107,97 @@
 
 {% for hand in poker_hands %}
 
-<div class="columns">
-    <div class="info_hand">
-        <div class="hand"><div class="label_hand">Hand Number</div><div class="value_hand">{{hand.number}}</div></div>
-        <div class="date"><div class="label_date">Date</div><div class="value_date">Value</div></div>
-        <div class="name"><div class="label_name">Name of Sheet Imported</div><div class="value_name">Value</div></div>
-        <div class="start"><div class="label_start">Hand Start Time</div><div class="value_start">{{hand.starting_time}}</div></div>
-        <div class="end"><div class="label_end">Hand End Time</div><div class="value_end">{{hand.ending_time}}</div></div>
-        <div class="duration"><div class="label_duration">Duration of Hand</div><div class="value_duration">Value</div></div>
+<div class="container">
+    <div class="info hand-summary">
+        <div class="def-line hand"><div class="label hand">Hand Number</div><div class="value hand">{{hand.number}}</div></div>
+        <div class="def-line date"><div class="label date">Date</div><div class="value date">Value</div></div>
+        <div class="def-line name"><div class="label name">Name of Sheet Imported</div><div class="value name">Value</div></div>
+        <div class="def-line start"><div class="label start">Start Time</div><div class="value start">{{hand.starting_time}}</div></div>
+        <div class="def-line end"><div class="label end">End Time</div><div class="value end">{{hand.ending_time}}</div></div>
+        <div class="def-line duration"><div class="label duration">Duration</div><div class="value duration">{{hand.duration}}</div></div>
     </div>
 
 
-    <div class="cards_community">
+    <div class="info community-cards">
         {% if hand.has_flop %}
-            <div class="cards_flop">
-                <div class="commcard">{{ hand.flop[0] | display_card }}</div>
-                <div class="commcard">{{ hand.flop[1] | display_card }}</div>
-                <div class="commcard">{{ hand.flop[2] | display_card }}</div>
-                <div class="label_flop">Flop</div>
+            <div class="flop">
+                <div class="cards">
+                    <div class="commcard">{{ hand.flop[0] | display_card }}</div>
+                    <div class="commcard">{{ hand.flop[1] | display_card }}</div>
+                    <div class="commcard">{{ hand.flop[2] | display_card }}</div>
+                </div>
+                <div class="label">Flop</div>
             </div>
             {% if hand.has_turn %}
-                <div class="cards_turn">
+                <div class="turn">
                     <div class="commcard">{{ hand.flop[3] | display_card }}</div>
-                    <div class="label_turn">Turn</div>
+                    <div class="label">Turn</div>
                 </div>
                 {% if hand.has_river %}
-                    <div clas="cards_river">
+                    <div class="river">
                         <div class="commcard">{{ hand.flop[4] | display_card }}</div>
-                        <div class="label_river">River</div>
+                        <div class="label">River</div>
                     </div>
                 {% endif %}
             {% endif %}
         {% endif %}
     </div>
 
-    <div class="info_blinds">
-        <div class="bb"><div class="label_bb">Big Blind Amount</div><div class="value_bb">{{hand.big_blind}}</div></div>
-        <div class="sb"><div class="label_sb">Small Blind Amount</div><div class="value_sb">{{hand.small_blind}}</div></div>
-        <div class="ante"><div class="label_ante">Ante Amount</div><div class="value_ante">{{hand.ante}}</div></div>
+    <div class="info blinds">
+        <div class="def-line big-blind"><div class="label">Big Blind Amount</div><div class="value">{{hand.big_blind}}</div></div>
+        <div class="def-line small-blind"><div class="label">Small Blind Amount</div><div class="value">{{hand.small_blind}}</div></div>
+        <div class="def-line ante"><div class="label">Ante Amount</div><div class="value">{{hand.ante}}</div></div>
     </div>
 
 </div>
 
 {% macro display_player(player) %}
 
-    <div class="p{{player.index}}">
-        <div class="player">{{player.index}}</div>
-        <div class="name">{{player.name}}</div>
-        <div class="chips_start">{{player.starting_stack}}</div>
-        <div class="chips_end">{{player.ending_stack}}</div>
-        <div class="card ah">{{player.pocket[0]|display_card}}</div>
-        <div class="card ah">{{player.pocket[1]|display_card}}</div>
-        <div class="player_dealer">{{hand.dealer == player.index}}</div>
-        <div class="player_not_sb">{{hand.small_blind_player == player.index}}</div>
-        <div class="player_not_bb">{{hand.big_blind_player == player.index}}</div>
-        <div class="straddle">{{player.straddle}}</div>
-        <div class="player_winner">{{player.hand_winner}}</div>
+    <div class="info player player-{{player.index}}">
+        <div class="player-name-line">
+            <span class="player">P{{player.index}}</span>
+            <span class="name">{{player.name}}</span>
+        </div>
+        <div class="def-line chips-start"><div class="label">S:</div><div class="value">{{player.starting_stack}}</div></div>
+        <div class="def-line chips-start"><div class="label">E:</div><div class="value">{{player.ending_stack}}</div></div>
+        <div class="cards">
+            <div class="card">{{player.pocket[0]|display_card}}</div>
+            <div class="card">{{player.pocket[1]|display_card}}</div>
+        </div>
+        <div class="def-line chips-start"><div class="label">Str:</div><div class="value">{{player.straddle}}</div></div>
+        <div class="player-badges">
+            {% if hand.dealer == player.index %}
+                <div class="encircled player-dealer">D</div>
+            {% endif %}
+            {% if hand.small_blind_player == player.index %}
+                <div class="encircled player-smallblind">SB</div>
+            {% endif %}
+            {% if hand.big_blind_player == player.index %}
+                <div class="encircled player-bigblind">BB</div>
+            {% endif %}
+            {% if player.hand_winner %}
+                <div class="encircled player-winner">W</div>
+            {% endif %}
+        </div>
     </div>
 {% endmacro %}
 
-<div class="columns info_players">
+<div class="container players">
     {% for player in hand.players[:5] %}
         {{display_player(player)}}
     {% endfor %}
 </div>
-<div class="columns info_players">
+<div class="container players">
     {% for player in hand.players[5:] %}
         {{display_player(player)}}
     {% endfor %}
+    {% for box in hand.empty_seats %}
+        <div class="empty-seat">
+            Empty seat {{box}}
+        </div>
+    {% endfor %}
 </div>
-<div class="columns events-list">
+<div class="container events-list">
 <table>
     <thead>
         <tr><th>Time</th><th>Action</th><th>Pot</th>
