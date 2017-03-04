@@ -30,10 +30,10 @@ def display_card(card):
               11: 'J'}.get(rank_value, str(rank_value))
 
     return """
-    <span class="card {1}">
-            <span class="rank">{0}</span>
-            <span class="suit">&{1};</span>
-    </span>""".format(value, suit)
+    <div class="playing-card {1}">
+            <div class="rank">{0}</div>
+            <div class="suit">&{1};</div>
+    </div>""".format(value, suit)
 
 def display_pocket(cards):
     return " ".join(display_card(c) for c in cards)
@@ -188,6 +188,24 @@ class PokerHand(object):
         return self.events[-1].starting_time
 
     @property
+    def duration(self):
+        shour, sminute, ssecond = [int(t) for t in self.starting_time.split(':')]
+        ehour, eminute, esecond = [int(t) for t in self.ending_time.split(':')]
+        hours = ehour - shour
+        minutes = eminute - sminute
+        seconds = esecond - ssecond
+        while seconds < 0:
+            seconds += 60
+            minutes -= 1
+        while minutes < 0:
+            minutes += 60
+            hours -= 1
+        assert hours >= 0
+        assert minutes >= 0
+        assert seconds >= 0
+        return "{0:2d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
+
+    @property
     def has_flop(self):
         return len(self.flop) >= 3
 
@@ -198,6 +216,10 @@ class PokerHand(object):
     @property
     def has_river(self):
         return len(self.flop) == 5
+
+    @property
+    def empty_seats(self):
+        return range(len(self.players) + 1, 11)
 
     def calculate_winners(self, players, board):
         if len(players) == 1:
@@ -215,6 +237,7 @@ class PokerHand(object):
         return winners
 
     def calculate_probabilities(self, players):
+        return {player.index: player.index for player in players}
         if len(self.flop) < 3:
             return None
         if len(players) == 1:
