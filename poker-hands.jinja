@@ -14,6 +14,11 @@
     align-items: flex-end;
 }
 
+.players{
+    flex-flow: row wrap;
+    align-items: stretch;
+}
+
 .flop, .turn, .river{
     display: flex;
     flex-direction: column;
@@ -34,6 +39,12 @@
 
 .info{
     border: 1px solid black;
+}
+
+.player{
+    padding: 0.3em 1em 0.3em 1em;
+    flex-basis: 15%;
+    margin: 1em;
 }
 
 .player-name-line{
@@ -183,20 +194,23 @@ tbody tr:nth-child(odd) {
 {% endmacro %}
 
 <div class="container players">
-    {% for player in hand.players[:5] %}
-        {{display_player(player)}}
-    {% endfor %}
-</div>
-<div class="container players">
-    {% for player in hand.players[5:] %}
+    {% for player in hand.players %}
         {{display_player(player)}}
     {% endfor %}
     {% for box in hand.empty_seats %}
-        <div class="empty-seat">
+        <div class="empty-seat player">
             Empty seat {{box}}
         </div>
     {% endfor %}
 </div>
+{% if False %}
+<div class="container players">
+    {% for player in hand.players[5:] %}
+        {{display_player(player)}}
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="container events-list">
 <table>
     <thead>
