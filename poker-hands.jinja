@@ -7,6 +7,11 @@
     <title>Poker Night in America</title>
 
 <style>
+
+body{
+    background-color: #d7d8cd;
+}
+
 .container, .cards, .community-cards{
     display: flex;
     flex-direction: row;
@@ -14,9 +19,14 @@
     align-items: flex-end;
 }
 
+.top-summary{
+    margin-bottom: 1em;
+}
+
 .players{
     flex-flow: row wrap;
     align-items: stretch;
+    margin-bottom: 1em;
 }
 
 .flop, .turn, .river{
@@ -39,12 +49,22 @@
 
 .info{
     border: 1px solid black;
+    box-shadow: 2px 4px #777;
+    background-color: white;
 }
 
 .player{
     padding: 0.3em 1em 0.3em 1em;
     flex-basis: 15%;
-    margin: 1em;
+    margin: 5px;
+}
+
+.hand-winner{
+    background-color: #7baa2e;
+}
+
+.empty-seat{
+    border: 1px dashed grey;
 }
 
 .player-name-line{
@@ -99,6 +119,10 @@
     color: #090;
 }
 
+table{
+    background: white;
+    border: 1px solid black;
+}
 tbody tr:nth-child(odd) {
   background: #eee;
 }
@@ -118,7 +142,7 @@ tbody tr:nth-child(odd) {
 
 {% for hand in poker_hands %}
 
-<div class="container">
+<div class="container top-summary">
     <div class="info hand-summary">
         <div class="def-line hand"><div class="label hand">Hand Number</div><div class="value hand">{{hand.number}}</div></div>
         <div class="def-line date"><div class="label date">Date</div><div class="value date">Value</div></div>
@@ -164,7 +188,7 @@ tbody tr:nth-child(odd) {
 
 {% macro display_player(player) %}
 
-    <div class="info player player-{{player.index}}">
+    <div class="info player player-{{player.index}} {% if player.hand_winner %}hand-winner{% endif %}">
         <div class="player-name-line">
             <span class="player">P{{player.index}}</span>
             <span class="name">{{player.name}}</span>
@@ -198,7 +222,7 @@ tbody tr:nth-child(odd) {
         {{display_player(player)}}
     {% endfor %}
     {% for box in hand.empty_seats %}
-        <div class="empty-seat player">
+        <div class="info empty-seat player">
             Empty seat {{box}}
         </div>
     {% endfor %}
