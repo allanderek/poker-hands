@@ -54,11 +54,6 @@ body{
     text-align: center;
 }
 
-.playing-card{
-    border: 1px solid black;
-    width: 20px;
-    margin: 2px;
-}
 
 .info{
     border: 1px solid black;
@@ -125,6 +120,17 @@ body{
 
 .playing-card{
     background-color: white;
+    border: 1px solid black;
+    width: 20px;
+    margin: 2px;
+    font-size: 2em;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+
+    padding: 0.1em 0.5em;
 }
 
 .diams {
@@ -174,7 +180,7 @@ tbody tr:nth-child(odd) {
                      12: 'Q',
                      11: 'J'}.get(rank_value, rank_value) %}
 
-    <div class="playing-card {1}">
+    <div class="playing-card {{suit}}">
             <div class="rank">{{value}}</div>
             <div class="suit">&{{suit}};</div>
     </div>
