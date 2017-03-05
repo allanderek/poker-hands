@@ -223,7 +223,7 @@ class PokerHand(object):
         if len(self.flop) < 3:
             return None
         if len(players) == 1:
-            return { players[0].index: "100%" }
+            return { players[0].index: 100.0 }
 
         deck = new_deck()
         for card in self.flop:
@@ -242,7 +242,7 @@ class PokerHand(object):
                 win_count[winner] += 1
 
         def get_percentage(n):
-            return "{0:.1f}%".format(100 * n / number_draws)
+            return 100 * n / number_draws
         return { player.index: get_percentage(win_count[player]) for player in players}
 
     def get_remaining_players(self):
@@ -377,6 +377,9 @@ class Event(object):
         self.display = True
         self.bold = False
         self.win_probabilities = None
+
+    def max_probability(self):
+        return max(self.win_probabilities.values())
 
 def parse_int(s):
     if not s:

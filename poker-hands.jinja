@@ -154,6 +154,11 @@ body{
     margin-bottom: 15px;
 }
 
+.maximum-probability{
+    color: #11e823;
+    font-weight: bold;
+}
+
 table{
     background: white;
     border: 1px solid black;
@@ -313,8 +318,17 @@ tbody tr:nth-child(odd) {
                     </td>
                     <td>{{event.pot}}</td>
                     {% if event.win_probabilities %}
+                        {% set max_prob = event.max_probability() %}
                         {% for p in hand.taking_part %}
-                            <td>{{event.win_probabilities.get(p.index, "-")}}</td>
+                            {% set p_prob = event.win_probabilities.get(p.index, None) %}
+
+                            <td class="probability {% if p_prob == max_prob %}maximum-probability{% endif %}">
+                                {% if p_prob is none %}
+                                    -
+                                {% else %}
+                                    {{ "{0:.1f}%".format(p_prob) }}
+                                {% endif %}
+                            </td>
                         {% endfor %}
                     {% endif %}
                 </tr>
