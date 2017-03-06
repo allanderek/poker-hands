@@ -155,13 +155,19 @@ body{
 }
 
 .maximum-probability{
-    color: #11e823;
+    color: #7baa2e;
     font-weight: bold;
+}
+
+.probability{
+    min-width: 4em;
+    text-align: center;
 }
 
 table{
     background: white;
     border: 1px solid black;
+    border-collapse: collapse;
 }
 tbody tr:nth-child(odd) {
   background: #eee;
@@ -329,6 +335,10 @@ tbody tr:nth-child(odd) {
                                     {{ "{0:.1f}%".format(p_prob) }}
                                 {% endif %}
                             </td>
+                        {% endfor %}
+                    {% else %}
+                        {% for p in hand.taking_part %}
+                            <td></td>
                         {% endfor %}
                     {% endif %}
                 </tr>
