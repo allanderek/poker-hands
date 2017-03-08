@@ -26,6 +26,10 @@ def parse_pocket(pocket):
     return [parse_card(c) for c in pocket.strip().split(' ')]
 
 class HandClass(enum.IntEnum):
+    # A player may not be obliged to display their cards at the showdown, but
+    # that means that they have lost the hand, hence we rank a 'not-shown' as
+    # the worst possible hand.
+    not_shown = 0
     high_card = 1
     pair = 2
     two_pair = 3
@@ -70,7 +74,15 @@ class HandRank(object):
 
 
 def best_hand(pocket, flop):
-    assert len(pocket) == 2
+    def get_value_counts(cards):
+        value_counts = defaultdict(int)
+        for value, _suit in cards:
+            value_counts[value] += 1
+        return value_counts
+
+    if len(pocket) != 2:
+        print(flop)
+        return HandRank(HandClass.not_shown, get_value_counts(flop))
     assert len(flop) == 5
 
     possible_hands = [
@@ -117,9 +129,7 @@ def best_hand(pocket, flop):
         else:
             straight = all(i in values for i in [14, 2, 3, 4, 5])
 
-        value_counts = defaultdict(int)
-        for value, suit in cards:
-            value_counts[value] += 1
+        value_counts = get_value_counts(cards)
 
         if flush and straight:
             return HandRank(HandClass.straight_flush, value_counts)
@@ -219,7 +229,10 @@ class PokerHand(object):
         return winners
 
     def calculate_probabilities(self, players):
-        # return {player.index: player.index for player in players}
+        # Don't bother attempting to calculate the probabilities for any players
+        # that ultimately do not show their hand, this is unfortunate, but just
+        # missing data and nothing we can do about it.
+        players = [p for p in players if players.flop]
         if len(self.flop) < 3:
             return None
         if len(players) == 1:
@@ -446,7 +459,7 @@ def read_poker_datafile(filename):
             if poker_hand:
                 yield poker_hand
 
-def compile_poker_hands_html():
+def compile_poker_hands_html(input_filename, output_filename):
     print("Recompile commencing.")
     env = jinja2.Environment(
         loader=jinja2.PackageLoader('poker_hands', '.'),
@@ -454,13 +467,22 @@ def compile_poker_hands_html():
     )
     template = env.get_template('poker-hands.jinja')
 
-    poker_hands = read_poker_datafile('example.csv')
+    poker_hands = read_poker_datafile(input_filename)
 
-    with open('poker-hands.html', 'w') as outfile:
+    with open(output_filename, 'w') as outfile:
         outfile.write(template.render(
             poker_hands=poker_hands
             ))
     print("Recompile complete.")
 
+import sys
+
+def get_argument(index, default):
+    if len(sys.argv) > index:
+        return sys.argv[index]
+    return default
+
 if __name__ == '__main__':
-    compile_poker_hands_html()
+    input_filename = get_argument(1, 'example.csv')
+    output_filename = get_argument(2, 'poker-hands.html')
+    compile_poker_hands_html(input_filename, output_filename)
