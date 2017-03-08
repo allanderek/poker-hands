@@ -2,8 +2,6 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.3.1/css/bulma.min.css" integrity="sha256-6ZFIKt0ohcBorQWIruhlYBoADBIFrJuXtEJsjFxb2Wk=" crossorigin="anonymous" /> -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <title>Poker Night in America</title>
 
 <style>
@@ -175,6 +173,8 @@ tbody tr:nth-child(odd) {
 
 </style>
 
+<link rel="stylesheet" href="poker-hands.css" />
+
 </head>
 <body>
 
@@ -203,7 +203,7 @@ tbody tr:nth-child(odd) {
 
 {% for hand in poker_hands %}
 
-<div class="hand-banner">{{hand.title}}</div>
+<div class="hand-banner">Hand {{hand.number}}</div>
 
 <div class="container top-summary">
     <div class="info hand-summary">
