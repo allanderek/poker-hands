@@ -2,6 +2,8 @@ import csv
 import enum
 from collections import defaultdict
 import itertools
+import traceback
+import datetime
 
 import jinja2
 
@@ -167,8 +169,8 @@ class PokerHand(object):
     def __init__(self):
         self.players = []
         self.events = []
-
         self.flop = []
+        self.errors = []
 
     def get_player(self, player_index):
         player = self.players[player_index - 1] if player_index else None
@@ -232,9 +234,11 @@ class PokerHand(object):
         # Don't bother attempting to calculate the probabilities for any players
         # that ultimately do not show their hand, this is unfortunate, but just
         # missing data and nothing we can do about it.
-        players = [p for p in players if players.flop]
+        players = [p for p in players if p.pocket]
         if len(self.flop) < 3:
             return None
+        if not players:
+            return {}
         if len(players) == 1:
             return { players[0].index: 100.0 }
 
@@ -276,6 +280,8 @@ class PokerHand(object):
 
         # The list of player indexes that have made *some* action in the hand.
         event_players = set(e.player for e in self.events)
+        # Some hands the big blind player wins without taking any action.
+        event_players.add(self.big_blind_player)
         self.taking_part = [p for p in self.players if p.index in event_players]
         for p in self.taking_part:
             # Just a sanity check that no empty seats take part.
@@ -309,6 +315,15 @@ class PokerHand(object):
                 player.ending_stack -= event.amount
                 event.description = '{} Raise {}'.format(player_description, event.amount)
                 event.bold = True
+            elif event.action == 'ALL_IN':
+                amount = player.ending_stack
+                total_players_pot = amount + player.invested_in_hand
+                if event.amount != player.ending_stack:
+                    self.errors.append("All-in amount: {} not equal to the player's current stack {}".format(event.amount, player.ending_stack))
+                pot += amount
+                player.ending_stack = 0
+                event.description = '{} goes all in for: {}'.format(player_description, amount)
+                event.bold = True
             elif event.action == 'CALL':
                 price = max(p.invested_in_hand for p in self.players)
                 call_amount = price - player.invested_in_hand
@@ -328,11 +343,10 @@ class PokerHand(object):
             # Careful, this applies to all events, but must be done after we have
             # potentially updated the pot.
             event.pot = pot
-            # This does mean we will be needlessly re-calculating when the
-            # probabilities have not changed, for example when someone bets or calls
-            # the probabilities have not changed. Actually I think those are the
-            # only two possibilities so this should be pretty easy to solve.
-            if event.action in ['BET', 'CALL']:
+            # After we have taken the action of the event we re-calculate the
+            # win probabilities, but for bet/calls (and all_ins) we know that
+            # the probabilities will not have changed.
+            if event.action in ['BET', 'CALL', 'ALL_IN']:
                 event.win_probabilities = most_recent_win_probabilities
             else:
                 remaining_players = self.get_remaining_players()
@@ -436,7 +450,8 @@ def parse_hand(fields):
             continue
         event = Event(starting_time)
         event.action = fields[event_start + 1]
-        assert event.action in ['BOARD', 'BET', 'CALL', 'FOLD']
+
+        assert event.action in ['BOARD', 'BET', 'CALL', 'FOLD', 'ALL_IN']
         # The very last event is generally cut off at the point it has no more
         # information, and the last event is often a fold hence we just assume
         # if there is an index error then the rest of the fields are empty.
@@ -448,7 +463,12 @@ def parse_hand(fields):
             pass
         hand.events.append(event)
 
-    hand.calculate_hand()
+    try:
+        hand.calculate_hand()
+    except Exception as error:
+        print("Error in hand {}: {}".format(hand.number, error))
+        hand.errors.append("Some irregularity in this hand's data was detected.")
+        traceback.print_exc()
     return hand
 
 def read_poker_datafile(filename):
@@ -469,9 +489,12 @@ def compile_poker_hands_html(input_filename, output_filename):
 
     poker_hands = read_poker_datafile(input_filename)
 
+
     with open(output_filename, 'w') as outfile:
         outfile.write(template.render(
-            poker_hands=poker_hands
+            poker_hands=poker_hands,
+            input_filename=input_filename,
+            date=datetime.date.today()
             ))
     print("Recompile complete.")
 

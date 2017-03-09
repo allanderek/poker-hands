@@ -11,16 +11,23 @@ body{
     font-family: Calibri, Candara, Segoe, Segoe UI, Optima, Arial;
 }
 
-.hand-banner{
+.banner{
     width: 100%;
-    text-align: center;
     border-top: 2px solid black;
     border-bottom: 2px solid black;
     margin-top: 5px;
     margin-bottom: 10px;
     padding-top: 1em;
     padding-bottom: 1em;
+}
+
+.hand-title{
+    text-align: center;
     background-color: #1264e8;
+}
+
+.errors-container{
+    background-color: #ed4747;
 }
 
 .container, .cards, .community-cards{
@@ -203,13 +210,23 @@ tbody tr:nth-child(odd) {
 
 {% for hand in poker_hands %}
 
-<div class="hand-banner">Hand {{hand.number}}</div>
+<div class="banner hand-title">Hand {{hand.number}}</div>
+
+{% if hand.errors %}
+<div class="banner errors-container">
+    <ul>
+        {% for hand_error in hand.errors %}
+            <li>{{hand_error}}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 
 <div class="container top-summary">
     <div class="info hand-summary">
         <div class="def-line hand"><div class="label hand">Hand Number</div><div class="value hand">{{hand.number}}</div></div>
-        <div class="def-line date"><div class="label date">Date</div><div class="value date">Value</div></div>
-        <div class="def-line name"><div class="label name">Name of Sheet Imported</div><div class="value name">Value</div></div>
+        <div class="def-line date"><div class="label date">Date (data formatted)</div><div class="value date">{{date}}</div></div>
+        <div class="def-line name"><div class="label name">Name of Sheet Imported</div><div class="value name">{{input_filename}}</div></div>
         <div class="def-line start"><div class="label start">Start Time</div><div class="value start">{{hand.starting_time}}</div></div>
         <div class="def-line end"><div class="label end">End Time</div><div class="value end">{{hand.ending_time}}</div></div>
         <div class="def-line duration"><div class="label duration">Duration</div><div class="value duration">{{hand.duration}}</div></div>
