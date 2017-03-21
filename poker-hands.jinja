@@ -214,6 +214,7 @@ tbody tr:nth-child(odd) {
 
 {% if hand.errors %}
 <div class="banner errors-container">
+    Possible data errors detected in this hand:
     <ul>
         {% for hand_error in hand.errors %}
             <li>{{hand_error}}</li>
@@ -282,7 +283,11 @@ tbody tr:nth-child(odd) {
                 {% endfor %}
             {% endif %}
         </div>
-        <div class="def-line chips-start"><div class="label">Str:</div><div class="value">{{player.straddle}}</div></div>
+        {#
+        <div class="def-line chips-start">
+            <div class="label">Str:</div>
+            <div class="value">{{player.straddle}}</div>
+        </div> #}
         <div class="player-badges">
             {% if hand.dealer == player.index %}
                 <div class="encircled player-dealer">D</div>
@@ -292,6 +297,9 @@ tbody tr:nth-child(odd) {
             {% endif %}
             {% if hand.big_blind_player == player.index %}
                 <div class="encircled player-bigblind">BB</div>
+            {% endif %}
+            {% if player.straddle %}
+                <div class="encircled player-straddle">{{player.straddle}}</div>
             {% endif %}
             {% if player.hand_winner %}
                 <div class="encircled player-winner">W</div>
