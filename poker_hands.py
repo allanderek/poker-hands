@@ -282,6 +282,9 @@ class PokerHand(object):
         event_players = set(e.player for e in self.events)
         # Some hands the big blind player wins without taking any action.
         event_players.add(self.big_blind_player)
+        for p in self.players:
+            if p.straddle:
+                event_players.add(p.index)
         self.taking_part = [p for p in self.players if p.index in event_players]
         for p in self.taking_part:
             # Just a sanity check that no empty seats take part.
@@ -289,7 +292,9 @@ class PokerHand(object):
         # Also check that any player not taking part did not receive cards
         for p in self.players:
             if p not in self.taking_part:
-                assert not p.cards
+                if p.cards:
+                    self.errors.append("""Player {}({}) does not seem to be taking part in the hand but
+                    nevertheless received cards.""".format(p.name, p.index))
 
         most_recent_win_probabilities = None
         for event in self.events:
@@ -357,12 +362,20 @@ class PokerHand(object):
         # It should not really be possible that this has not already been called
         # since we should have had at least one FOLD or BOARD event.
         # remaining_players = self.get_remaining_players()
-        if len(remaining_players) == 1:
+        num_remaining_players = len(remaining_players)
+        if num_remaining_players < 1:
+            self.errors.append("""It appears all players have folded.""")
+        elif num_remaining_players == 1:
             winner = remaining_players[0]
             winners = [winner]
         else:
-            assert len(remaining_players) > 1
-            winners = self.calculate_winners(remaining_players, self.flop)
+            assert num_remaining_players > 1
+            if len(self.flop) != 5:
+                self.errors.append("""The event stream for this hand ended with
+                multiple players left, but the full flop not having been dealt.""")
+                winners = remaining_players
+            else:
+                winners = self.calculate_winners(remaining_players, self.flop)
 
         winning_amount = pot / len(winners)
         for winner in winners:
