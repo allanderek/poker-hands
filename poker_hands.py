@@ -485,7 +485,7 @@ def parse_hand(fields):
     return hand
 
 def read_poker_datafile(filename):
-    with open(filename, 'r') as input_file:
+    with open(filename, 'r', encoding='utf-8', errors='ignore') as input_file:
         csvreader = csv.reader(input_file, delimiter=',', quotechar='"')
         for row in csvreader:
             poker_hand = parse_hand(row)
