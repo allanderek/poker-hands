@@ -1,10 +1,6 @@
-appdirs==1.4.2
-argh==0.26.2
-Jinja2==2.9.5
-MarkupSafe==0.23
+appdirs==1.4.3
+Jinja2==2.9.6
+MarkupSafe==1.0
 packaging==16.8
-pathtools==0.1.2
-pyparsing==2.1.10
-PyYAML==3.12
+pyparsing==2.2.0
 six==1.10.0
-watchdog==0.8.3
