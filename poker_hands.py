@@ -495,7 +495,7 @@ def read_poker_datafile(filename):
 def compile_poker_hands_html(input_filename, output_filename):
     print("Recompile commencing.")
     env = jinja2.Environment(
-        loader=jinja2.PackageLoader('poker_hands', '.'),
+        loader=jinja2.FileSystemLoader('.'),
         autoescape=jinja2.select_autoescape(['html', 'xml'])
     )
     template = env.get_template('poker-hands.jinja')
