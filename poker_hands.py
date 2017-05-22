@@ -493,12 +493,19 @@ def read_poker_datafile(filename):
                 yield poker_hand
 
 import os
+import sys
 
 def compile_poker_hands_html(input_filename, output_filename):
     print("Recompile commencing.")
     template_relative_load_path = '.'
-    template_base_load_path = os.environ.get("_MEIPASS2", os.path.abspath(".") )
-    template_load_path = os.path.join(template_base_load_path, template_relative_load_path)
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        template_base_path = sys._MEIPASS
+    except Exception:
+        template_base_path = os.path.abspath(".")
+
+    template_load_path = os.path.join(template_base_path, template_relative_load_path)
+
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(template_load_path),
         autoescape=jinja2.select_autoescape(['html', 'xml'])
@@ -516,7 +523,6 @@ def compile_poker_hands_html(input_filename, output_filename):
             ))
     print("Recompile complete.")
 
-import sys
 
 def get_argument(index, default):
     if len(sys.argv) > index:
