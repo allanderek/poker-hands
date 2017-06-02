@@ -171,12 +171,15 @@ class PokerHand(object):
         self.events = []
         self.flop = []
         self.errors = []
+        self.number = 'No hand number parsed'
 
     def get_player(self, player_index):
         return next((p for p in self.players if p.index == player_index), None)
 
     @property
     def ending_time(self):
+        if not self.events:
+            return self.starting_time
         return self.events[-1].starting_time
 
     @property
@@ -242,10 +245,16 @@ class PokerHand(object):
 
         deck = new_deck()
         for card in self.flop:
-            deck.remove(card)
+            try:
+                deck.remove(card)
+            except ValueError:
+                self.errors.append("The card: {}, appears twice on the flop.".format(card))
         for player in players:
             for card in player.pocket:
-                deck.remove(card)
+                try:
+                    deck.remove(card)
+                except ValueError:
+                    self.errors.append("The card: {} appears twice in player pockets and/or the flop".format(card))
 
         possible_draws = itertools.combinations(deck, 5 - len(self.flop))
         win_count = defaultdict(int)
@@ -358,8 +367,9 @@ class PokerHand(object):
         # End of event stream.
 
         # It should not really be possible that this has not already been called
-        # since we should have had at least one FOLD or BOARD event.
-        # remaining_players = self.get_remaining_players()
+        # since we should have had at least one FOLD or BOARD event, but since we're
+        # lenient with other respects, this seems reasonable, and it should not take long.
+        remaining_players = self.get_remaining_players()
         num_remaining_players = len(remaining_players)
         if num_remaining_players < 1:
             self.errors.append("""It appears all players have folded.""")
@@ -428,58 +438,61 @@ def parse_hand(fields):
     if not fields or fields[0].startswith("//"):
         return None
     hand = PokerHand()
-    hand.starting_time = fields[0]
-    hand.title = fields[1]
-    title_fields = hand.title.split(' ')
-    if title_fields[0] == 'Hand':
-        hand.number = title_fields[1]
-
-    hand.ante = fields[2]
-    hand.small_blind = parse_int(fields[3])
-    hand.big_blind = parse_int(fields[4])
-    hand.dealer = parse_int(fields[5])
-    hand.small_blind_player = parse_int(fields[6])
-    hand.big_blind_player = parse_int(fields[7])
-    players_starting_index = 8
-    number_of_players = 10
-    for player_index in range(1,number_of_players + 1):
-        start_index = players_starting_index + ((player_index - 1) * 4)
-        player = Player(player_index)
-        player.name = fields[start_index]
-        player.straddle = parse_int(fields[start_index + 1])
-        player.cards = fields[start_index + 2]
-        player.pocket = parse_pocket(player.cards)
-        player.init_stack(int(fields[start_index + 3]))
-
-        if not player.name.startswith("SEAT"):
-            hand.players.append(player)
-
-    events_starting_index = players_starting_index + 4 * number_of_players
-    for event_start in range(events_starting_index, len(fields), 5):
-        starting_time = fields[event_start]
-        if not starting_time:
-            continue
-        event = Event(starting_time)
-        event.action = fields[event_start + 1]
-
-        assert event.action in ['BOARD', 'BET', 'CALL', 'FOLD', 'ALL_IN']
-        # The very last event is generally cut off at the point it has no more
-        # information, and the last event is often a fold hence we just assume
-        # if there is an index error then the rest of the fields are empty.
-        try:
-            event.player = parse_int(fields[event_start + 2])
-            event.card = fields[event_start + 3]
-            event.amount = parse_int(fields[event_start + 4])
-        except IndexError:
-            pass
-        hand.events.append(event)
-
     try:
+        hand.starting_time = fields[0]
+        hand.title = fields[1]
+        title_fields = hand.title.split(' ')
+        if title_fields[0] == 'Hand':
+            hand.number = title_fields[1]
+
+        hand.ante = fields[2]
+        hand.small_blind = parse_int(fields[3])
+        hand.big_blind = parse_int(fields[4])
+        hand.dealer = parse_int(fields[5])
+        hand.small_blind_player = parse_int(fields[6])
+        hand.big_blind_player = parse_int(fields[7])
+        players_starting_index = 8
+        number_of_players = 10
+        for player_index in range(1,number_of_players + 1):
+            start_index = players_starting_index + ((player_index - 1) * 4)
+            player = Player(player_index)
+            player.name = fields[start_index]
+            player.straddle = parse_int(fields[start_index + 1])
+            player.cards = fields[start_index + 2]
+            player.pocket = parse_pocket(player.cards)
+            player.init_stack(int(fields[start_index + 3]))
+
+            if not player.name.startswith("SEAT"):
+                hand.players.append(player)
+
+        events_starting_index = players_starting_index + 4 * number_of_players
+        for event_start in range(events_starting_index, len(fields), 5):
+            starting_time = fields[event_start]
+            if not starting_time:
+                continue
+            event = Event(starting_time)
+            event.action = fields[event_start + 1]
+
+            assert event.action in ['BOARD', 'BET', 'CALL', 'FOLD', 'ALL_IN']
+            # The very last event is generally cut off at the point it has no more
+            # information, and the last event is often a fold hence we just assume
+            # if there is an index error then the rest of the fields are empty.
+            try:
+                event.player = parse_int(fields[event_start + 2])
+                event.card = fields[event_start + 3]
+                event.amount = parse_int(fields[event_start + 4])
+            except IndexError:
+                pass
+            hand.events.append(event)
+        if not hand.events:
+            hand.errors.append("No events associated with this hand.")
         hand.calculate_hand()
     except Exception as error:
+        print("---------------------")
         print("Error in hand {}: {}".format(hand.number, error))
         hand.errors.append("Some irregularity in this hand's data was detected.")
         traceback.print_exc()
+        print("---------------------")
     return hand
 
 def read_poker_datafile(filename):
