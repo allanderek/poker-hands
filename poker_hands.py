@@ -173,9 +173,7 @@ class PokerHand(object):
         self.errors = []
 
     def get_player(self, player_index):
-        player = self.players[player_index - 1] if player_index else None
-        assert player is None or player.index == player_index
-        return player
+        return next((p for p in self.players if p.index == player_index), None)
 
     @property
     def ending_time(self):
@@ -377,7 +375,7 @@ class PokerHand(object):
             else:
                 winners = self.calculate_winners(remaining_players, self.flop)
 
-        winning_amount = pot / len(winners)
+        winning_amount = int(pot / len(winners))
         for winner in winners:
             winner.hand_winner = True
             winner.ending_stack += winning_amount
@@ -455,7 +453,7 @@ def parse_hand(fields):
 
         if not player.name.startswith("SEAT"):
             hand.players.append(player)
-            assert len(hand.players) == player_index
+
     events_starting_index = players_starting_index + 4 * number_of_players
     for event_start in range(events_starting_index, len(fields), 5):
         starting_time = fields[event_start]
